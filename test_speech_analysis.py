@@ -69,4 +69,3 @@ def get_response():
     print(avatar_response)
     return avatar_response
 
-get_response()
