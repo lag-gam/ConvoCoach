@@ -1,13 +1,63 @@
-import { useState, useRef } from 'react'
-import { Mic, MicOff, Video, Loader } from 'lucide-react'
+"use client"
+
+import { useState, useRef, useEffect } from "react"
+import { Mic, MicOff, Video, VideoOff, Loader } from "lucide-react"
+
+const avatars = [
+  {
+    name: "Default Avatar",
+    url: "https://media-hosting.imagekit.io//4078ec62a6824c90/screenshot_1739688772692.png?Expires=1834296773&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=LwWvBbL2shd0AqMt~XyVwUwxey2AGKgPPrMEAql3lULNTvG8mF~Urcxhpy7KvW2Cy2LL1VWU69UBsOXc5SWU9FgsvvVz03ggSbtVtApbitZ2eh7uKwiv0rzsvhTFCwmJBxPpiU9D-CdY~ynDhlHodH~xE8wpd2WYAzdChBhLW2QfeEPDs3zP12LXeZFnO0-05Xco0LTnwQOUK12ZDUsIZLtkWIln6Ooqkb9R-BjBDKT9zGnw5IY5D2JHWrTiJOLX3H0W0Ti65BcXYrbYiILndV2xVM-aIfVPoCtz2bYrSPswkG5yPYDErl79jApaQCvIc3mjZBDvCpEjC4u2U-7xGw__",
+  },
+  { name: "Avatar 2", url: "https://static.planetminecraft.com/files/resource_media/screenshot/1428/stevepmc7855107.jpg" },
+  { name: "Avatar 3", url: "https://example.com/avatar3.png" },
+]
+
+const prompts = [
+  "Introduce yourself and your background",
+  "Describe your ideal work environment",
+  "Explain a challenging situation you've overcome",
+  "Discuss your long-term career goals",
+  "Share a recent accomplishment you're proud of",
+]
 
 export default function ConvoCoach() {
   const [recording, setRecording] = useState(false)
-  const [videoUrl, setVideoUrl] = useState('')
-  const [aiResponse, setAiResponse] = useState('')
+  const [videoUrl, setVideoUrl] = useState("")
+  const [aiResponse, setAiResponse] = useState("")
   const [loading, setLoading] = useState(false)
-  const mediaRecorder = useRef<MediaRecorder | null>(null)
-  const audioChunks = useRef<Blob[]>([])
+  const [selectedAvatar, setSelectedAvatar] = useState(avatars[0].url)
+  const [selectedPrompt, setSelectedPrompt] = useState("")
+  const [webcamActive, setWebcamActive] = useState(false)
+  const mediaRecorder = useRef(null)
+  const audioChunks = useRef([])
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    if (webcamActive) {
+      startWebcam()
+    } else {
+      stopWebcam()
+    }
+  }, [webcamActive])
+
+  const startWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (err) {
+      console.error("Error accessing webcam:", err)
+    }
+  }
+
+  const stopWebcam = () => {
+    if (videoRef.current?.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks()
+      tracks.forEach((track) => track.stop())
+      videoRef.current.srcObject = null
+    }
+  }
 
   const startRecording = async () => {
     try {
@@ -20,7 +70,7 @@ export default function ConvoCoach() {
       mediaRecorder.current.start()
       setRecording(true)
     } catch (err) {
-      console.error('Error accessing microphone:', err)
+      console.error("Error accessing microphone:", err)
     }
   }
 
@@ -34,93 +84,167 @@ export default function ConvoCoach() {
   const processRecording = async () => {
     setLoading(true)
     try {
-      const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' })
+      const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" })
       const formData = new FormData()
-      formData.append('audio', audioBlob, 'recording.wav')
-  
+      formData.append("audio", audioBlob, "recording.wav")
+      formData.append("source_url", selectedAvatar)
+      formData.append("prompt", selectedPrompt)
+
       const response = await fetch("http://127.0.0.1:5000/generate-video", {
         method: "POST",
         body: formData,
       })
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-  
+
       const data = await response.json()
-  
+
       if (data.error) {
-        console.error('Error from server:', data.error)
+        console.error("Error from server:", data.error)
         setAiResponse("Error generating response. Try again.")
         return
       }
-  
+
       setAiResponse(data.ai_response)
       setVideoUrl(data.video_url)
-      
     } catch (error) {
-      console.error('Fetch error:', error)
+      console.error("Fetch error:", error)
       setAiResponse("Connection failed. Check server and try again.")
     } finally {
       setLoading(false)
       audioChunks.current = []
     }
   }
-  
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="bg-white rounded-lg shadow-lg p-4">
-          <div className="mt-4 flex justify-center gap-4">
-            <button
-              onClick={recording ? stopRecording : startRecording}
-              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-            >
-              {recording ? (
-                <>
-                  <MicOff size={20} />
-                  Stop Recording
-                </>
-              ) : (
-                <>
-                  <Mic size={20} />
-                  Start Conversation
-                </>
-              )}
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <h1 className="text-4xl font-bold text-white text-center">ConvoCoach</h1>
+
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-semibold mb-4">Practice Settings</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Choose Your Speaker:</label>
+              <select
+                className="w-full p-2 border rounded-lg"
+                value={selectedAvatar}
+                onChange={(e) => setSelectedAvatar(e.target.value)}
+              >
+                {avatars.map((avatar, index) => (
+                  <option key={index} value={avatar.url}>
+                    {avatar.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select a Prompt:</label>
+              <select
+                className="w-full p-2 border rounded-lg"
+                value={selectedPrompt}
+                onChange={(e) => setSelectedPrompt(e.target.value)}
+              >
+                <option value="">Choose a prompt...</option>
+                {prompts.map((prompt, index) => (
+                  <option key={index} value={prompt}>
+                    {prompt}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-8">
+  <div className="flex space-x-4">
+  {/* User Webcam Section */}
+  <div className="flex-1 bg-white rounded-lg shadow-lg p-6">
+    <h3 className="text-xl font-semibold mb-4">Your Webcam</h3>
+    <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden relative">
+      {webcamActive ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-gray-500">Webcam is off</p>
+        </div>
+      )}
+      <button
+        onClick={() => setWebcamActive(!webcamActive)}
+        className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
+      >
+        {webcamActive ? <VideoOff size={20} /> : <Video size={20} />}
+      </button>
+    </div>
+  </div>
+
+  {/* AI Assistant Section */}
+  <div className="flex-1 bg-white rounded-lg shadow-lg p-6">
+    <h3 className="text-xl font-semibold mb-4">AI Assistant</h3>
+    <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+      {videoUrl ? (
+        <video key={videoUrl} autoPlay controls className="w-full h-full object-cover">
+          <source src={videoUrl} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-gray-500">AI response will appear here</p>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+
+        <div className="flex justify-center">
+          <button
+            onClick={recording ? stopRecording : startRecording}
+            className={`flex items-center gap-2 ${
+              recording ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+            } text-white px-6 py-3 rounded-lg transition duration-300`}
+            disabled={!selectedPrompt || loading}
+          >
+            {recording ? (
+              <>
+                <MicOff size={20} />
+                Stop Recording
+              </>
+            ) : (
+              <>
+                <Mic size={20} />
+                Start Conversation
+              </>
+            )}
+          </button>
+        </div>
+
         {loading && (
-          <div className="text-center p-8">
-            <Loader className="animate-spin text-blue-600" size={32} />
+          <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+            <Loader className="animate-spin text-blue-600 mx-auto" size={32} />
             <p className="mt-2 text-gray-600">Generating response...</p>
           </div>
         )}
 
         {aiResponse && (
-          <div className="bg-white rounded-lg shadow-lg p-4">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h3 className="text-xl font-semibold mb-4">AI Feedback:</h3>
             <p className="text-gray-800">{aiResponse}</p>
           </div>
         )}
-        
-        {videoUrl && (
-  <div className="bg-white rounded-lg shadow-lg p-4">
-    <h3 className="text-lg font-semibold">AI Video Response</h3>
-    <video 
-      key={videoUrl}  // Force re-render when URL changes
-      controls 
-      width="50%"
-      autoplay
-    >
-      <source src={videoUrl} type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
-  </div>
-)}
-
       </div>
     </div>
+  </div>
   )
 }
+
