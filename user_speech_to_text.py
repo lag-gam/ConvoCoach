@@ -1,10 +1,8 @@
 import os
 import time
 import wave
-import requests
 import assemblyai as aai
 from dotenv import load_dotenv
-import time
 
 # Load API Key
 load_dotenv(".env1")
@@ -17,11 +15,13 @@ if not aai.settings.api_key:
 RATE = 16000  # Sample rate
 CHANNELS = 1  # Mono
 RECORD_SECONDS = 15  # Duration to record
-WAVE_OUTPUT_FILENAME = "user_audios/recorded_audio"+str(time.time())+".wav"
 
-# Record audio from the microphone and save to a WAV file
+
 def record_audio():
+    """Records audio from the microphone and saves it as a WAV file."""
     import pyaudio
+
+    filename = f"user_audios/recorded_audio_{int(time.time())}.wav"
 
     p = pyaudio.PyAudio()
     stream = p.open(format=pyaudio.paInt16,
@@ -43,32 +43,55 @@ def record_audio():
     stream.close()
     p.terminate()
 
-    with wave.open(WAVE_OUTPUT_FILENAME, 'wb') as wf:
+    os.makedirs("user_audios", exist_ok=True)
+    with wave.open(filename, 'wb') as wf:
         wf.setnchannels(CHANNELS)
         wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
 
-# Transcribe the audio file with sentiment analysis
-def transcribe_audio(audio_url):
+    return filename  # Return the filename for processing
+
+
+def transcribe_audio(audio_file):
+    """
+    Transcribes the given audio file and returns the transcript + sentiment analysis.
+    
+    :param audio_file: Path to the audio file to transcribe.
+    :return: A dictionary containing transcription text and sentiment analysis results.
+    """
     transcriber = aai.Transcriber()
     config = aai.TranscriptionConfig(sentiment_analysis=True)
-    transcript = transcriber.transcribe(audio_url, config)
-    return transcript
+    
+    transcript = transcriber.transcribe(audio_file, config)
 
-# Main function
+    return {
+        "text": transcript.text,
+        "sentiment_analysis": [
+            {
+                "text": result.text,
+                "sentiment": result.sentiment,
+                "confidence": result.confidence,
+                "start": result.start,
+                "end": result.end
+            }
+            for result in transcript.sentiment_analysis
+        ]
+    }
+
+
+# Allow this script to be run standalone for testing
 if __name__ == "__main__":
-    record_audio()
-    audio_url = WAVE_OUTPUT_FILENAME
+    audio_file = record_audio()
     print("Transcribing and analyzing sentiment...")
-    transcript = transcribe_audio(audio_url)
+    result = transcribe_audio(audio_file)
 
     print("\nTranscription:")
-    print(transcript.text)
+    print(result["text"])
 
     print("\nSentiment Analysis Results:")
-    for result in transcript.sentiment_analysis:
-        print(f"Text: {result.text}")
-        print(f"Sentiment: {result.sentiment}")
-        print(f"Confidence: {result.confidence}")
-        print(f"Timestamp: {result.start} - {result.end}\n")
+    for entry in result["sentiment_analysis"]:
+        print(f"Text: {entry['text']}")
+        print(f"Sentiment: {entry['sentiment']}")
+        print(f"Confidence: {entry['confidence']}")
+        print(f"Timestamp: {entry['start']} - {entry['end']}\n")
