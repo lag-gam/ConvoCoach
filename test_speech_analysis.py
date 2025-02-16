@@ -3,6 +3,7 @@ import os
 import re
 import numpy as np
 from dotenv import load_dotenv
+import user_speech_to_text
 
 # Load .env for API Key
 load_dotenv()
@@ -14,68 +15,58 @@ if not api_key:
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=api_key)
 
-# Define common filler words
-FILLER_WORDS = {"umm", "uh", "like", "you know", "so", "actually", "literally", "basically", "kinda", "sort of"}
-
-def analyze_speech_pattern(transcribed_text, total_duration_seconds):
+def generate_avatar_response(transcribed_text):
     """
-    Detects filler words, pauses, stuttering, and words per second (WPS).
+    Uses OpenAI API to analyze speech and provide conversational feedback while keeping the topic in mind.
     """
-    words = transcribed_text.split()
-    num_words = len(words)
-
-    # Detect repeated words (stuttering)
-    repeated_words = [word for i, word in enumerate(words[:-1]) if word == words[i+1]]
-
-    # Detect filler words
-    filler_count = sum(1 for word in words if word.lower() in FILLER_WORDS)
-
-    # Detect long pauses ("...", multiple spaces)
-    long_pauses = len(re.findall(r"\.\.\.|\s{3,}", transcribed_text))
-
-    # Calculate words per second (WPS)
-    wps = round(num_words / total_duration_seconds, 2) if total_duration_seconds > 0 else 0
-
-    # Structured speech analysis
-    speech_analysis = f"""
-    Words per second: {wps}
-    Filler words count: {filler_count}
-    Stuttering instances: {len(set(repeated_words))}
-    Long pauses detected: {long_pauses}
-    """
-
-    return speech_analysis
-
-def generate_avatar_response(transcribed_text, total_duration_seconds):
-    """
-    Generates a **natural** AI avatar response based on speech analysis.
-    """
-    speech_analysis = analyze_speech_pattern(transcribed_text, total_duration_seconds)
 
     prompt = f"""
-    You are a friendly AI speaking coach helping someone improve their speech.
-    Based on the analysis below, respond in **natural spoken language** as if you were talking to them.
-    
-    {speech_analysis}
+    Imagine you are a **vocal coach assistant** designed to help a wide variety of users improve their speech clarity while keeping the conversation flowing.
+    Your task is to:
+    1️⃣ **Analyze the user's speech transcript** and look for:
+       - **Unfinished thoughts** (sentences that end abruptly).
+       - **Repeated words** (signs of stuttering or hesitation).
+       - **Filler words** (uh, um, like, you know, actually, basically, so).
+       - **Long pauses** (indicated by "...").
+    2️⃣ **Continue the conversation naturally** by responding in a way that keeps the user's topic in mind.
+    3️⃣ **Provide subtle, encouraging feedback** in a conversational manner—avoid sounding too robotic or overly critical.
 
-    Your response should be **1-2 short sentences**, casual, supportive, and sound natural.
+    **Rules for Your Response:**
+    - Be **supportive and friendly**.
+    - Your response should be **2-3 short sentences**.
+    - First, **engage with what the user was trying to say**.
+    - Then, **gently provide feedback** to help them improve.
+    - Most importantly, only give feedback **when necessary**. If speech was good and coherent, compliment/commend them.
+    
+    **User's Speech Transcript:**
+    "{transcribed_text}"
+
+    Based on this transcript, respond as if you were talking to them in real-time. Keep the conversation flowing while subtly helping them improve.
     """
 
     response = client.chat.completions.create(
         model="gpt-4-turbo",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.6,  # Balances structure and variation
-        max_tokens=50  # Ensures concise responses
+        max_tokens=200  # Ensures concise responses
     )
 
     return response.choices[0].message.content.strip()
 
-# 🔹 Example Whisper-generated Transcript (Test Case)
-whisper_transcript = "Umm, umm, so I... I think, that like, uh, we should maybe, umm, go to the store..."
-total_speaking_time = 12  # Assume the transcript duration was 12 seconds
 
-# 🔹 Get AI avatar response
-avatar_response = generate_avatar_response(whisper_transcript, total_speaking_time)
+# Transcript (Test Case)
+def get_response():
+    audio_file = user_speech_to_text.record_audio()
+    transcript = user_speech_to_text.transcribe_audio(audio_file)
+    transcript_text = transcript.get("text", "").strip()
 
-# 🔹 Print the direct avatar response (no headers, just natural speech)
-print(avatar_response)
+    if not transcript_text:
+        print("⚠️ No valid transcription received. Exiting...")
+        exit()
+
+    # Get AI avatar response
+    avatar_response = generate_avatar_response(transcript_text)
+    print(avatar_response)
+    return avatar_response
+
+get_response()

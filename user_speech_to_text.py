@@ -5,7 +5,7 @@ import assemblyai as aai
 from dotenv import load_dotenv
 
 # Load API Key
-load_dotenv(".env1")
+load_dotenv(".env")
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 
 if not aai.settings.api_key:
@@ -64,7 +64,12 @@ def transcribe_audio(audio_file):
     config = aai.TranscriptionConfig(sentiment_analysis=True)
     
     transcript = transcriber.transcribe(audio_file, config)
-
+    try:
+        os.remove(audio_file)
+        print(f"Deleted file: {audio_file}")
+    except Exception as e:
+        print(f"Error deleting file: {e}")
+        
     return {
         "text": transcript.text,
         "sentiment_analysis": [
