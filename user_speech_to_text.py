@@ -66,10 +66,9 @@ def transcribe_audio(audio_file):
     transcript = transcriber.transcribe(audio_file, config)
     try:
         os.remove(audio_file)
-        print(f"Deleted file: {audio_file}")
     except Exception as e:
         print(f"Error deleting file: {e}")
-        
+
     return {
         "text": transcript.text,
         "sentiment_analysis": [

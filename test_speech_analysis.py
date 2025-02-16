@@ -15,6 +15,7 @@ if not api_key:
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=api_key)
 
+#TODO: Add text speech feedback (num words in response/num_words)
 def generate_avatar_response(transcribed_text):
     """
     Uses OpenAI API to analyze speech and provide conversational feedback while keeping the topic in mind.
@@ -68,4 +69,3 @@ def get_response():
     avatar_response = generate_avatar_response(transcript_text)
     print(avatar_response)
     return avatar_response
-
