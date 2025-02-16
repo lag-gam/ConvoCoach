@@ -6,7 +6,7 @@ import { Mic, MicOff, Video, VideoOff, Loader } from "lucide-react"
 const avatars = [
   {
     name: "Default Avatar",
-    url: "https://media-hosting.imagekit.io//4078ec62a6824c90/screenshot_1739688772692.png",
+    url: "https://media.licdn.com/dms/image/v2/D5603AQFQemGbPTJW5w/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1723056712090?e=2147483647&v=beta&t=a6e5a0TMt4R3_FQgyjjbz1eayWz3WvE9NWSRjnpChWI",
   },
   { name: "Avatar 2", url: "https://static.planetminecraft.com/files/resource_media/screenshot/1428/stevepmc7855107.jpg" },
   { name: "Avatar 3", url: "https://example.com/avatar3.png" },
@@ -196,22 +196,26 @@ export default function ConvoCoach() {
           </div>
 
           {/* AI Assistant Section */}
-          <div className="flex-1 card">
-            <h3 className="text-xl font-semibold mb-2 text-[#1e3a8a]">AI Assistant</h3>
-            <div className="video-container">
-              {videoUrl ? (
-                <video key={videoUrl} autoPlay controls className="w-full h-auto object-contain">
-                  <source src={videoUrl} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="flex items-center justify-center p-4">
-                  <p className="text-gray-500">AI response will appear here</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+<div className="flex-1 card">
+  <h3 className="text-xl font-semibold mb-2 text-[#1e3a8a]">AI Assistant</h3>
+  <div className="video-container">
+    {videoUrl ? (
+      <video key={videoUrl} autoPlay controls className="w-full h-auto object-contain">
+        <source src={videoUrl} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    ) : (
+      <div className="flex items-center justify-center p-4">
+        <img
+          src={selectedAvatar}
+          alt="Selected avatar"
+          className="w-full h-auto object-contain"
+        />
+      </div>
+    )}
+  </div>
+</div>
+</div>
 
         {/* Record / Stop Button */}
         <div className="flex justify-center">
