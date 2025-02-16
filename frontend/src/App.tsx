@@ -6,7 +6,7 @@ import { Mic, MicOff, Video, VideoOff, Loader } from "lucide-react"
 const avatars = [
   {
     name: "Default Avatar",
-    url: "https://media-hosting.imagekit.io//4078ec62a6824c90/screenshot_1739688772692.png?Expires=1834296773&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=LwWvBbL2shd0AqMt~XyVwUwxey2AGKgPPrMEAql3lULNTvG8mF~Urcxhpy7KvW2Cy2LL1VWU69UBsOXc5SWU9FgsvvVz03ggSbtVtApbitZ2eh7uKwiv0rzsvhTFCwmJBxPpiU9D-CdY~ynDhlHodH~xE8wpd2WYAzdChBhLW2QfeEPDs3zP12LXeZFnO0-05Xco0LTnwQOUK12ZDUsIZLtkWIln6Ooqkb9R-BjBDKT9zGnw5IY5D2JHWrTiJOLX3H0W0Ti65BcXYrbYiILndV2xVM-aIfVPoCtz2bYrSPswkG5yPYDErl79jApaQCvIc3mjZBDvCpEjC4u2U-7xGw__",
+    url: "https://media-hosting.imagekit.io//4078ec62a6824c90/screenshot_1739688772692.png",
   },
   { name: "Avatar 2", url: "https://static.planetminecraft.com/files/resource_media/screenshot/1428/stevepmc7855107.jpg" },
   { name: "Avatar 3", url: "https://example.com/avatar3.png" },
@@ -120,15 +120,17 @@ export default function ConvoCoach() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="container space-y-8">
         <h1 className="text-4xl font-bold text-white text-center">ConvoCoach</h1>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Practice Settings */}
+        <div className="card">
           <h2 className="text-2xl font-semibold mb-4">Practice Settings</h2>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Choose Your Speaker:</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Choose Your Speaker:
+              </label>
               <select
                 className="w-full p-2 border rounded-lg"
                 value={selectedAvatar}
@@ -141,9 +143,10 @@ export default function ConvoCoach() {
                 ))}
               </select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select a Prompt:</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select a Prompt:
+              </label>
               <select
                 className="w-full p-2 border rounded-lg"
                 value={selectedPrompt}
@@ -160,53 +163,57 @@ export default function ConvoCoach() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-8">
-  <div className="flex space-x-4">
-  {/* User Webcam Section */}
-  <div className="flex-1 bg-white rounded-lg shadow-lg p-6">
-    <h3 className="text-xl font-semibold mb-4">Your Webcam</h3>
-    <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden relative">
-      {webcamActive ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-gray-500">Webcam is off</p>
+        {/* Flexbox container for Webcam and AI Assistant */}
+        <div className="flex-section">
+          {/* Webcam Section */}
+          <div className="flex-1 card">
+            <h3 className="text-xl font-semibold mb-2 text-[#1e3a8a]">Your Webcam</h3>
+            <div className="video-container">
+              {webcamActive ? (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-auto object-contain"
+                />
+              ) : (
+                <div className="flex items-center justify-center p-4">
+                  <p className="text-gray-500">Webcam is off</p>
+                </div>
+              )}
+              <button
+                onClick={() => setWebcamActive(!webcamActive)}
+                className="absolute top-2 right-2 bg-white p-2 rounded-full shadow hover:bg-blue-50 transition-colors"
+              >
+                {webcamActive ? (
+                  <VideoOff size={20} className="text-[#1e3a8a]" />
+                ) : (
+                  <Video size={20} className="text-[#1e3a8a]" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* AI Assistant Section */}
+          <div className="flex-1 card">
+            <h3 className="text-xl font-semibold mb-2 text-[#1e3a8a]">AI Assistant</h3>
+            <div className="video-container">
+              {videoUrl ? (
+                <video key={videoUrl} autoPlay controls className="w-full h-auto object-contain">
+                  <source src={videoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="flex items-center justify-center p-4">
+                  <p className="text-gray-500">AI response will appear here</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
-      <button
-        onClick={() => setWebcamActive(!webcamActive)}
-        className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
-      >
-        {webcamActive ? <VideoOff size={20} /> : <Video size={20} />}
-      </button>
-    </div>
-  </div>
 
-  {/* AI Assistant Section */}
-  <div className="flex-1 bg-white rounded-lg shadow-lg p-6">
-    <h3 className="text-xl font-semibold mb-4">AI Assistant</h3>
-    <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-      {videoUrl ? (
-        <video key={videoUrl} autoPlay controls className="w-full h-full object-cover">
-          <source src={videoUrl} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      ) : (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">AI response will appear here</p>
-        </div>
-      )}
-    </div>
-  </div>
-</div>
-
-
+        {/* Record / Stop Button */}
         <div className="flex justify-center">
           <button
             onClick={recording ? stopRecording : startRecording}
@@ -229,22 +236,22 @@ export default function ConvoCoach() {
           </button>
         </div>
 
+        {/* Loading Spinner */}
         {loading && (
-          <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+          <div className="card text-center p-8">
             <Loader className="animate-spin text-blue-600 mx-auto" size={32} />
             <p className="mt-2 text-gray-600">Generating response...</p>
           </div>
         )}
 
+        {/* AI Feedback */}
         {aiResponse && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-semibold mb-4">AI Feedback:</h3>
+          <div className="card">
+            <h3 className="text-xl font-semibold mb-2">AI Feedback:</h3>
             <p className="text-gray-800">{aiResponse}</p>
           </div>
         )}
       </div>
     </div>
-  </div>
   )
 }
-
